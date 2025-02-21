@@ -1,0 +1,65 @@
+import java.util.*;
+
+class TicketBooking {
+    private final boolean[] seats = new boolean[10]; // 10 available seats
+
+    public synchronized boolean bookSeat(int seatNumber, String user) {
+        if (seatNumber < 0 || seatNumber >= seats.length) {
+            System.out.println(user + ": Invalid seat number!");
+            return false;
+        }
+        if (!seats[seatNumber]) {
+            seats[seatNumber] = true;
+            System.out.println(user + " booked seat #" + (seatNumber + 1));
+            return true;
+        } else {
+            System.out.println(user + ": Seat #" + (seatNumber + 1) + " is already booked.");
+            return false;
+        }
+    }
+}
+
+class User extends Thread {
+    private final TicketBooking booking;
+    private final int seatNumber;
+
+    public User(String name, TicketBooking booking, int seatNumber, boolean isVIP) {
+        super(name);
+        this.booking = booking;
+        this.seatNumber = seatNumber;
+        if (isVIP) {
+            setPriority(Thread.MAX_PRIORITY); 
+        }
+    }
+
+    @Override
+    public void run() {
+        booking.bookSeat(seatNumber, getName());
+    }
+}
+
+public class TicketBookingSystem {
+    public static void main(String[] args) {
+        TicketBooking booking = new TicketBooking();
+        List<User> users = new ArrayList<>();
+
+        users.add(new User("VIP_Alice", booking, 2, true));
+        users.add(new User("VIP_Bob", booking, 4, true));
+
+        users.add(new User("User_Charlie", booking, 2, false));
+        users.add(new User("User_Dave", booking, 4, false));
+        users.add(new User("User_Eve", booking, 7, false));
+
+        for (User user : users) {
+            user.start();
+        }
+
+        for (User user : users) {
+            try {
+                user.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
